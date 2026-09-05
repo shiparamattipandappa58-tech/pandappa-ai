@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="kn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pandappa AI Master Hub</title>
+    <style>
+        body { font-family: sans-serif; background-color: #0f172a; color: #fff; text-align: center; padding: 20px; }
+        .card { background: #1e293b; border-radius: 10px; padding: 15px; margin-bottom: 15px; }
+        .btn { padding: 10px 15px; font-size: 14px; margin: 5px; border: none; border-radius: 5px; background: #2563eb; color: white; cursor: pointer; }
+        video { width: 100%; max-width: 350px; border-radius: 8px; display: none; margin-top: 10px; }
+        #responseBox { background: #0f172a; padding: 15px; border-radius: 8px; text-align: left; min-height: 60px; border: 1px solid #334155; }
+    </style>
+</head>
+<body>
+
+    <h2>🐼 ಪಾಂಡಪ್ಪ AI (Pandappa AI Master)</h2>
+    
+    <div class="card">
+        <div id="status">🎙️ 'ಹೇ ಪಾಂಡಪ್ಪ' ಸಕ್ರಿಯಗೊಳಿಸಲು ಸ್ಟಾರ್ಟ್ ಬಟನ್ ಒತ್ತಿ</div>
+        <button class="btn" onclick="initVoice()">Start Wake-Word ("ಹೇ ಪಾಂಡಪ್ಪ")</button>
+    </div>
+
+    <div class="card">
+        <h3>📺 ಲೈವ್ ಸ್ಕ್ರೀನ್ ಶೇರ್ / ಕ್ಯಾಮೆರಾ</h3>
+        <button class="btn" onclick="startCamera()">📸 ಕ್ಯಾಮೆರಾ ಆನ್</button>
+        <button class="btn" onclick="startScreenShare()">📲 ಸ್ಕ್ರೀನ್ ಶೇರ್</button>
+        <video id="videoFeed" autoplay playsinline></video>
+    </div>
+
+    <div class="card">
+        <h3>💬 AI ಉತ್ತರ:</h3>
+        <div id="responseBox">ಇಲ್ಲಿ ಉತ್ತರ ಕಾಣಿಸುತ್ತದೆ...</div>
+    </div>
+
+    <script>
+        let video = document.getElementById('videoFeed');
+        let status = document.getElementById('status');
+        let responseBox = document.getElementById('responseBox');
+
+        function initVoice() {
+            window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!window.SpeechRecognition) {
+                alert("Voice Recognition ಬೆಂಬಲವಿಲ್ಲ!");
+                return;
+            }
+            let recognition = new webkitSpeechRecognition();
+            recognition.continuous = true;
+            recognition.lang = 'kn-IN';
+
+            recognition.onresult = function(event) {
+                let lastIndex = event.results.length - 1;
+                let text = event.results[lastIndex][0].transcript.toLowerCase().trim();
+
+                if (text.includes("ಪಾಂಡಪ್ಪ") || text.includes("pandappa")) {
+                    status.innerText = "⚡ 'ಹೇ ಪಾಂಡಪ್ಪ' ಗ್ರಹಿಸಲಾಗಿದೆ! ಪ್ರಶ್ನೆ ಕೇಳಿ...";
+                    speakText("ಹೇಳಿ ಪಾಂಡಪ್ಪ ಕೇಳುತ್ತಿದ್ದಾನೆ!");
+                } else {
+                    status.innerText = "🤔 ಆಲೋಚಿಸುತ್ತಿದೆ: " + text;
+                    processQuery(text);
+                }
+            };
+
+            recognition.start();
+            status.innerText = "🎧 'ಹೇ ಪಾಂಡಪ್ಪ' ಶಬ್ದಕ್ಕಾಗಿ ಕಾಯಲಾಗುತ್ತಿದೆ...";
+        }
+
+        async function startCamera() {
+            let stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+            video.style.display = "block";
+        }
+
+        async function startScreenShare() {
+            let stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+            video.srcObject = stream;
+            video.style.display = "block";
+        }
+
+        function captureFrame() {
+            if (video.style.display === "none" || !video.srcObject) return null;
+            let canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            let ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+            return canvas.toDataURL('image/jpeg');
+        }
+
+        function processQuery(userPrompt) {
+            let imageBase64 = captureFrame();
+
+            fetch('http://localhost:5000/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: userPrompt, image: imageBase64 })
+            })
+            .then(res => res.json())
+            .then(data => {
+                responseBox.innerText = data.response;
+                speakText(data.response);
+            });
+        }
+
+        function speakText(text) {
+            let msg = new SpeechSynthesisUtterance(text);
+            msg.lang = 'kn-IN';
+            window.speechSynthesis.speak(msg);
+        }
+    </script>
+</body>
+</html>
