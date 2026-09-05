@@ -11,6 +11,14 @@ CORS(app)
 TEXT_MODEL = "qwen:0.5b"
 VISION_MODEL = "moondream"
 
+# System instruction for high-quality Kannada & English responses
+SYSTEM_PROMPT = (
+    "You are Pandappa AI, a smart assistant. "
+    "If the user asks in Kannada, reply in simple, clear, and accurate Kannada. "
+    "If the user asks in English, reply in English. "
+    "Keep answers short, concise, and helpful."
+)
+
 @app.route('/')
 def home():
     if os.path.exists('index.html'):
@@ -22,22 +30,15 @@ def chat():
     data = request.json or {}
     prompt = data.get('prompt', '').strip().replace('"', "'").replace('\n', ' ')
     image_data = data.get('image', None)
-    file_text = data.get('file_text', None)
 
-    if not prompt and not image_data and not file_text:
-        return jsonify({'response': 'ದಯವಿಟ್ಟು ಏನನ್ನಾದರೂ ಕೇಳಿ ಅಥವಾ ಫೈಲ್ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ.'}), 400
+    if not prompt and not image_data:
+        return jsonify({'response': 'ದಯವಿಟ್ಟು ಪ್ರಶ್ನೆ ಕೇಳಿ ಅಥವಾ ಫೋಟೋ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ.'}), 400
 
     temp_image_path = None
 
     try:
-        # File Handling
-        if file_text:
-            clean_file = file_text[:1500].replace('"', "'").replace('\n', ' ')
-            combined_prompt = f"Context: {clean_file} Question: {prompt}"
-            cmd = ['ollama', 'run', TEXT_MODEL, combined_prompt]
-
-        # Vision Handling
-        elif image_data and ',' in image_data:
+        # Vision Request (Image + Question)
+        if image_data and ',' in image_data:
             header, encoded = image_data.split(',', 1)
             image_bytes = base64.b64decode(encoded)
             
@@ -47,24 +48,24 @@ def chat():
             with open(temp_image_path, "wb") as f:
                 f.write(image_bytes)
             
-            vision_prompt = prompt if prompt else "Describe this image"
+            vision_prompt = f"{prompt if prompt else 'Describe this image in Kannada or English'}"
             cmd = ['ollama', 'run', VISION_MODEL, vision_prompt, temp_image_path]
 
-        # 1-Second Ultra Fast Text Response
+        # Fast Text Request (Kannada & English Optimization)
         else:
-            full_prompt = f"Answer briefly in Kannada or English: {prompt}"
+            full_prompt = f"{SYSTEM_PROMPT}\nUser: {prompt}\nPandappa AI:"
             cmd = ['ollama', 'run', TEXT_MODEL, full_prompt]
 
-        # Secure subprocess call without shell=True to avoid command line breakage
-        process = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+        process = subprocess.run(cmd, capture_output=True, text=True, timeout=45)
 
         if temp_image_path and os.path.exists(temp_image_path):
             os.remove(temp_image_path)
 
         if process.returncode == 0:
-            return jsonify({'response': process.stdout.strip()})
+            reply = process.stdout.strip()
+            return jsonify({'response': reply})
         else:
-            return jsonify({'response': 'Ollama ಪ್ರಾಸೆಸ್ ಮಾಡಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.'}), 500
+            return jsonify({'response': 'ಕ್ಷಮಿಸಿ, ಉತ್ತರ ನೀಡಲು ಸಾಧ್ಯವಾಗುತ್ತಿಲ್ಲ.'}), 500
 
     except subprocess.TimeoutExpired:
         if temp_image_path and os.path.exists(temp_image_path):
