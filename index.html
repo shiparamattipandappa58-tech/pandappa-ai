@@ -3,99 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pandappa AI - Local Voice Assistant</title>
+    <title>Pandappa AI - ChatGPT Style</title>
     <style>
         :root {
-            --bg-main: #0f172a;
-            --bg-sidebar: #1e293b;
-            --chat-user: #2563eb;
-            --chat-bot: #334155;
+            --bg-main: #090d16;
+            --bg-card: #1e293b;
+            --user-bubble: #2563eb;
+            --bot-bubble: #1e293b;
             --accent: #38bdf8;
             --text: #f8fafc;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
-        body { background-color: var(--bg-main); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-        /* Sidebar Style */
-        .sidebar { width: 260px; background-color: var(--bg-sidebar); padding: 15px; display: flex; flex-direction: column; gap: 10px; border-right: 1px solid #475569; }
-        .sidebar h2 { font-size: 18px; color: var(--accent); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-        .sidebar button { background: #0284c7; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; text-align: left; margin-bottom: 5px; }
-        .sidebar button:hover { background: #0369a1; }
-        .status-box { background: #0f172a; padding: 10px; border-radius: 6px; font-size: 12px; color: #94a3b8; }
+        /* Header */
+        .header { padding: 12px 20px; background: #0f172a; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+        .header h2 { font-size: 18px; color: var(--accent); display: flex; align-items: center; gap: 8px; }
+        .controls { display: flex; gap: 10px; }
+        .btn-top { background: #334155; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; }
+        .btn-top:hover { background: #475569; }
 
-        /* Main Chat Area */
-        .main-content { flex: 1; display: flex; flex-direction: column; height: 100%; position: relative; }
-        .chat-header { padding: 15px; background: var(--bg-sidebar); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #475569; }
+        /* Chat Window */
         .chat-box { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+        .msg { max-width: 82%; padding: 12px 16px; border-radius: 12px; font-size: 15px; line-height: 1.5; word-break: break-word; position: relative; white-space: pre-wrap; }
+        .user { align-self: flex-end; background-color: var(--user-bubble); color: white; border-bottom-right-radius: 2px; }
+        .bot { align-self: flex-start; background-color: var(--bot-bubble); color: var(--text); border-bottom-left-radius: 2px; border: 1px solid #334155; }
+        
+        .action-bar { display: flex; gap: 10px; margin-top: 8px; font-size: 12px; opacity: 0.8; }
+        .action-btn { background: rgba(255,255,255,0.1); border: none; color: #38bdf8; padding: 3px 8px; border-radius: 4px; cursor: pointer; }
 
-        /* Message Bubbles */
-        .message { max-width: 80%; padding: 12px 16px; border-radius: 12px; font-size: 15px; line-height: 1.5; white-space: pre-wrap; position: relative; word-break: break-word; }
-        .user-msg { align-self: flex-end; background-color: var(--chat-user); color: white; border-bottom-right-radius: 2px; }
-        .bot-msg { align-self: flex-start; background-color: var(--chat-bot); color: var(--text); border-bottom-left-radius: 2px; }
-        .copy-btn { position: absolute; top: 5px; right: 8px; font-size: 10px; background: rgba(255,255,255,0.2); border: none; color: white; padding: 2px 5px; border-radius: 4px; cursor: pointer; }
-
-        /* Input Controls */
-        .input-area { padding: 15px; background: var(--bg-sidebar); display: flex; gap: 10px; border-top: 1px solid #475569; }
-        input[type="text"] { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: white; font-size: 15px; }
-        .btn { padding: 12px 16px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; }
+        /* Input Bar */
+        .input-bar { padding: 12px 15px; background: #0f172a; display: flex; gap: 10px; border-top: 1px solid #334155; align-items: center; }
+        input[type="text"] { flex: 1; padding: 14px; border-radius: 10px; border: 1px solid #334155; background: #1e293b; color: white; font-size: 15px; outline: none; }
+        input[type="text"]:focus { border-color: var(--accent); }
+        
+        .btn { padding: 12px 18px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; color: white; font-size: 14px; }
         .btn-send { background: #16a34a; }
-        .btn-voice { background: #eab308; }
-        .btn-voice.active { background: #dc2626; animation: pulse 1.5s infinite; }
+        .btn-mic { background: #eab308; }
+        .btn-mic.active { background: #dc2626; animation: pulse 1.5s infinite; }
 
-        video { width: 100%; height: 120px; object-fit: cover; border-radius: 6px; background: black; margin-top: 10px; display: none; }
+        video { width: 100%; height: 120px; object-fit: cover; display: none; background: black; }
         canvas { display: none; }
-
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-        @media (max-width: 600px) { .sidebar { display: none; } }
     </style>
 </head>
 <body>
 
-    <!-- Sidebar -->
-    <div class="sidebar">
+    <div class="header">
         <h2>🐼 Pandappa AI</h2>
-        <button onclick="clearChat()">➕ New Chat</button>
-        <button onclick="toggleCamera()">📷 Camera Toggle</button>
-        
-        <div class="status-box">
-            <p><strong>Status:</strong> <span id="status">Ready</span></p>
-            <p><strong>Mode:</strong> Background Voice</p>
+        <div class="controls">
+            <button class="btn-top" onclick="clearHistory()">🧹 Clear Chat</button>
+            <button class="btn-top" id="speechToggle" onclick="toggleSpeech()">🔊 Voice: ON</button>
+            <button class="btn-top" onclick="toggleCamera()">📷 Camera</button>
         </div>
-        
-        <video id="webcam" autoplay playsinline muted></video>
     </div>
 
-    <!-- Main Chat Area -->
-    <div class="main-content">
-        <div class="chat-header">
-            <h3>💬 Pandappa Voice Assistant</h3>
-            <button class="btn btn-voice" id="voiceToggleBtn" onclick="toggleVoice()">🎙️ Enable Voice</button>
-        </div>
+    <video id="webcam" autoplay playsinline muted></video>
 
-        <div class="chat-box" id="chatBox">
-            <div class="message bot-msg">
-                ನಮಸ್ಕಾರ! ನಾನು Pandappa AI. "Enable Voice" ಕ್ಲಿಕ್ ಮಾಡಿದರೆ ಹಿನ್ನೆಲೆಯಲ್ಲಿ ನಿಮ್ಮ ಧ್ವನಿಗೆ ಆಟೋಮ್ಯಾಟಿಕ್ ಆಗಿ ಸ್ಪಂದಿಸುತ್ತೇನೆ.
-            </div>
-        </div>
+    <div class="chat-box" id="chatBox"></div>
 
-        <div class="input-area">
-            <input type="text" id="userInput" placeholder="ನಿಮ್ಮ ಪ್ರಶ್ನೆಯನ್ನು ಇಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ..." onkeypress="if(event.key === 'Enter') sendManualQuery()">
-            <button class="btn btn-send" onclick="sendManualQuery()">Send</button>
-        </div>
+    <div class="input-bar">
+        <button class="btn btn-mic" id="micBtn" onclick="toggleVoice()">🎙️ Voice</button>
+        <input type="text" id="userInput" placeholder="ಇಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ ಅಥವಾ ಮಾತನಾಡಿ..." onkeypress="if(event.key === 'Enter') sendQuery()">
+        <button class="btn btn-send" onclick="sendQuery()">Send</button>
     </div>
 
     <canvas id="snapshotCanvas"></canvas>
 
     <script>
-        const API_URL = '/chat';
         let isListening = false;
-        let isCameraOn = false;
+        let speechEnabled = true;
+        let isProcessing = false;
         let recognition = null;
         let videoStream = null;
-        let isProcessing = false;
+        let lastUserQuery = "";
 
-        // Background Voice Speech Recognition Setup
+        // Load History on Page Start
+        window.onload = () => {
+            loadHistory();
+        };
+
+        // Speech Recognition Setup
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             recognition = new SpeechRecognition();
@@ -103,172 +92,155 @@
             recognition.interimResults = false;
             recognition.lang = 'kn-IN';
 
-            recognition.onresult = async function(event) {
+            recognition.onresult = (e) => {
                 if (isProcessing) return;
-                
-                const transcript = event.results[event.results.length - 1][0].transcript.trim();
-                updateStatus("ಆಲಿಸಿದ್ದು: " + transcript);
-
-                if (transcript.length > 0) {
-                    processAIRequest(transcript);
-                }
+                const txt = e.results[e.results.length - 1][0].transcript.trim();
+                if (txt) sendQuery(txt);
             };
 
-            recognition.onerror = function(event) {
-                if (event.error !== 'no-speech') {
-                    updateStatus("Voice error: " + event.error);
-                }
+            recognition.onend = () => {
+                if (isListening) try { recognition.start(); } catch(err){}
             };
-
-            recognition.onend = function() {
-                if (isListening) {
-                    setTimeout(() => {
-                        try { recognition.start(); } catch(e) {}
-                    }, 300);
-                }
-            };
-        } else {
-            alert("ನಿಮ್ಮ ಬ್ರೌಸರ್‌ನಲ್ಲಿ Speech Recognition ಸಪೋರ್ಟ್ ಮಾಡುತ್ತಿಲ್ಲ. Google Chrome ಬಳಸಿ.");
         }
 
         function toggleVoice() {
-            if (!recognition) return;
-            const btn = document.getElementById('voiceToggleBtn');
+            const btn = document.getElementById('micBtn');
             if (!isListening) {
-                try {
-                    recognition.start();
-                    isListening = true;
-                    btn.classList.add('active');
-                    btn.innerText = "🛑 Stop Voice";
-                    updateStatus("Listening background...");
-                } catch(e) {
-                    updateStatus("Voice start error");
-                }
+                try { recognition.start(); isListening = true; btn.classList.add('active'); } catch(e){}
             } else {
-                isListening = false;
-                recognition.stop();
-                btn.classList.remove('active');
-                btn.innerText = "🎙️ Enable Voice";
-                updateStatus("Voice Disabled");
+                isListening = false; recognition.stop(); btn.classList.remove('active');
             }
         }
 
-        // Camera Functions
+        function toggleSpeech() {
+            speechEnabled = !speechEnabled;
+            document.getElementById('speechToggle').innerText = speechEnabled ? "🔊 Voice: ON" : "🔇 Voice: OFF";
+            if (!speechEnabled) window.speechSynthesis.cancel();
+        }
+
         async function toggleCamera() {
-            const video = document.getElementById('webcam');
-            if (!isCameraOn) {
+            const v = document.getElementById('webcam');
+            if (v.style.display === 'none' || !v.style.display) {
                 try {
                     videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                    video.srcObject = videoStream;
-                    video.style.display = 'block';
-                    isCameraOn = true;
-                } catch (err) {
-                    alert("Camera Permission Error: " + err);
-                }
+                    v.srcObject = videoStream; v.style.display = 'block';
+                } catch(e) { alert("Camera Error: " + e); }
             } else {
-                if (videoStream) {
-                    videoStream.getTracks().forEach(track => track.stop());
-                }
-                video.srcObject = null;
-                video.style.display = 'none';
-                isCameraOn = false;
+                if(videoStream) videoStream.getTracks().forEach(t => t.stop());
+                v.style.display = 'none';
             }
         }
 
         function captureFrame() {
-            if (!isCameraOn) return null;
-            const video = document.getElementById('webcam');
-            const canvas = document.getElementById('snapshotCanvas');
-            canvas.width = video.videoWidth || 320;
-            canvas.height = video.videoHeight || 240;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            return canvas.toDataURL('image/jpeg', 0.7);
+            const v = document.getElementById('webcam');
+            if (v.style.display === 'none') return null;
+            const c = document.getElementById('snapshotCanvas');
+            c.width = 320; c.height = 240;
+            c.getContext('2d').drawImage(v, 0, 0, 320, 240);
+            return c.toDataURL('image/jpeg', 0.5);
         }
 
-        // Process AI Request
-        async function processAIRequest(promptText) {
-            isProcessing = true;
-            appendMessage(promptText, 'user-msg');
-            updateStatus("AI ಉತ್ತರ ಸಿದ್ಧಪಡಿಸುತ್ತಿದೆ...");
+        async function sendQuery(overrideText = null) {
+            const input = document.getElementById('userInput');
+            const txt = overrideText || input.value.trim();
+            if (!txt || isProcessing) return;
 
-            const loadingBubble = appendMessage("🤔 Pandappa ಆಲೋಚಿಸುತ್ತಿದೆ...", 'bot-msg');
-            const imageBase64 = captureFrame();
+            lastUserQuery = txt;
+            if (!overrideText) input.value = '';
+            
+            appendMsg(txt, 'user');
+            saveHistory();
+            isProcessing = true;
+
+            const botElem = appendMsg("🤔 Pandappa ಆಲೋಚಿಸುತ್ತಿದೆ...", 'bot');
+            const img = captureFrame();
 
             try {
-                const response = await fetch(API_URL, {
+                const res = await fetch('/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        prompt: promptText,
-                        image: imageBase64
-                    })
+                    body: JSON.stringify({ prompt: txt, image: img })
                 });
+                const data = await res.json();
+                const reply = data.response || "ಉತ್ತರ ಸಿಗಲಿಲ್ಲ.";
 
-                const data = await response.json();
-                const aiReply = data.response || "ಉತ್ತರ ಪಡೆಯಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.";
+                botElem.innerText = reply;
+                addActionBar(botElem, reply);
+                saveHistory();
 
-                loadingBubble.innerText = aiReply;
-                addCopyButton(loadingBubble, aiReply);
-                
-                speakText(aiReply);
-                updateStatus("Ready");
+                if (speechEnabled) speak(reply);
 
-            } catch (err) {
-                loadingBubble.innerText = "❌ Error: ಸರ್ವರ್ ಸಂಪರ್ಕದಲ್ಲಿ ತೊಂದರೆಯಾಗಿದೆ.";
-                updateStatus("Error");
+            } catch(e) {
+                botElem.innerText = "❌ ಸರ್ವರ್ ಸಂಪರ್ಕದಲ್ಲಿ ತೊಂದರೆಯಾಗಿದೆ.";
             } finally {
                 isProcessing = false;
             }
         }
 
-        // Helper Functions
-        function appendMessage(text, className) {
-            const chatBox = document.getElementById('chatBox');
-            const msgDiv = document.createElement('div');
-            msgDiv.className = `message ${className}`;
-            msgDiv.innerText = text;
-            chatBox.appendChild(msgDiv);
-            chatBox.scrollTop = chatBox.scrollHeight;
-            return msgDiv;
+        function appendMsg(txt, cls) {
+            const b = document.getElementById('chatBox');
+            const d = document.createElement('div');
+            d.className = `msg ${cls}`;
+            d.innerText = txt;
+            b.appendChild(d);
+            b.scrollTop = b.scrollHeight;
+            return d;
         }
 
-        function addCopyButton(elem, text) {
-            const btn = document.createElement('button');
-            btn.className = 'copy-btn';
-            btn.innerText = 'Copy';
-            btn.onclick = () => {
+        function addActionBar(elem, text) {
+            const bar = document.createElement('div');
+            bar.className = 'action-bar';
+            
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'action-btn';
+            copyBtn.innerText = '📋 Copy';
+            copyBtn.onclick = () => {
                 navigator.clipboard.writeText(text);
-                btn.innerText = 'Copied!';
-                setTimeout(() => btn.innerText = 'Copy', 2000);
+                copyBtn.innerText = '✅ Copied!';
+                setTimeout(() => copyBtn.innerText = '📋 Copy', 2000);
             };
-            elem.appendChild(btn);
+
+            const regenBtn = document.createElement('button');
+            regenBtn.className = 'action-btn';
+            regenBtn.innerText = '🔄 Regenerate';
+            regenBtn.onclick = () => {
+                if (lastUserQuery) sendQuery(lastUserQuery);
+            };
+
+            bar.appendChild(copyBtn);
+            bar.appendChild(regenBtn);
+            elem.appendChild(bar);
         }
 
-        function sendManualQuery() {
-            const input = document.getElementById('userInput');
-            const val = input.value.trim();
-            if (val !== '' && !isProcessing) {
-                processAIRequest(val);
-                input.value = '';
-            }
-        }
-
-        function clearChat() {
-            document.getElementById('chatBox').innerHTML = '<div class="message bot-msg">ಚಾಟ್ ಇತಿಹಾಸವನ್ನು ಕ್ಲಿಯರ್ ಮಾಡಲಾಗಿದೆ! ಹೊಸ ಪ್ರಶ್ನೆ ಕೇಳಿ.</div>';
-        }
-
-        function updateStatus(msg) {
-            document.getElementById('status').innerText = msg;
-        }
-
-        function speakText(text) {
-            if ('speechSynthesis' in window) {
+        function speak(text) {
+            if ('speechSynthesis' in window && text) {
                 window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'kn-IN';
-                window.speechSynthesis.speak(utterance);
+                const u = new SpeechSynthesisUtterance(text);
+                u.lang = 'kn-IN';
+                window.speechSynthesis.speak(u);
             }
+        }
+
+        function saveHistory() {
+            const chatBox = document.getElementById('chatBox');
+            localStorage.setItem('pandappa_history', chatBox.innerHTML);
+        }
+
+        function loadHistory() {
+            const chatBox = document.getElementById('chatBox');
+            const saved = localStorage.getItem('pandappa_history');
+            if (saved) {
+                chatBox.innerHTML = saved;
+                chatBox.scrollTop = chatBox.scrollHeight;
+            } else {
+                appendMsg("ನಮಸ್ಕಾರ! ನಾನು Pandappa AI. ಕೆಳಗೆ ಟೈಪ್ ಮಾಡಿ ಅಥವಾ Voice ಮೂಲಕ ಕನ್ನಡ ಮತ್ತು ಇಂಗ್ಲಿಷ್‌ನಲ್ಲಿ ಪ್ರಶ್ನೆ ಕೇಳಿ.", 'bot');
+            }
+        }
+
+        function clearHistory() {
+            localStorage.removeItem('pandappa_history');
+            document.getElementById('chatBox').innerHTML = '';
+            appendMsg("ಚಾಟ್ ಇತಿಹಾಸವನ್ನು ಡಿಲೀಟ್ ಮಾಡಲಾಗಿದೆ. ಹೊಸ ಪ್ರಶ್ನೆ ಕೇಳಿ!", 'bot');
         }
     </script>
 </body>
