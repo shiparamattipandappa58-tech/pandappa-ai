@@ -3,70 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pandappa AI - ChatGPT Style</title>
+    <title>Pandappa AI - Hybrid Ultra</title>
     <style>
         :root {
-            --bg-main: #090d16;
-            --bg-card: #1e293b;
-            --user-bubble: #2563eb;
-            --bot-bubble: #1e293b;
-            --accent: #38bdf8;
-            --text: #f8fafc;
+            --bg-main: #ffffff;
+            --sidebar-bg: #f8fafc;
+            --text-dark: #0f172a;
+            --chat-user: #2563eb;
+            --chat-bot: #f1f5f9;
+            --accent: #0284c7;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background-color: var(--bg-main); color: var(--text); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background: var(--bg-main); color: var(--text-dark); display: flex; height: 100vh; overflow: hidden; }
 
-        /* Header */
-        .header { padding: 12px 20px; background: #0f172a; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
-        .header h2 { font-size: 18px; color: var(--accent); display: flex; align-items: center; gap: 8px; }
-        .controls { display: flex; gap: 10px; }
-        .btn-top { background: #334155; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; }
-        .btn-top:hover { background: #475569; }
-
-        /* Chat Window */
-        .chat-box { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
-        .msg { max-width: 82%; padding: 12px 16px; border-radius: 12px; font-size: 15px; line-height: 1.5; word-break: break-word; position: relative; white-space: pre-wrap; }
-        .user { align-self: flex-end; background-color: var(--user-bubble); color: white; border-bottom-right-radius: 2px; }
-        .bot { align-self: flex-start; background-color: var(--bot-bubble); color: var(--text); border-bottom-left-radius: 2px; border: 1px solid #334155; }
+        /* Navigation Sidebar (ChatGPT Style) */
+        .sidebar {
+            width: 280px; background: var(--sidebar-bg); border-right: 1px solid #e2e8f0;
+            display: flex; flex-direction: column; padding: 15px; position: absolute;
+            left: -280px; top: 0; bottom: 0; z-index: 100; transition: left 0.3s ease;
+        }
+        .sidebar.active { left: 0; }
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; font-size: 18px; font-weight: bold; margin-bottom: 20px; }
         
-        .action-bar { display: flex; gap: 10px; margin-top: 8px; font-size: 12px; opacity: 0.8; }
-        .action-btn { background: rgba(255,255,255,0.1); border: none; color: #38bdf8; padding: 3px 8px; border-radius: 4px; cursor: pointer; }
+        .menu-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 8px; cursor: pointer; color: #334155; font-size: 15px; font-weight: 500; }
+        .menu-item:hover { background: #e2e8f0; }
 
-        /* Input Bar */
-        .input-bar { padding: 12px 15px; background: #0f172a; display: flex; gap: 10px; border-top: 1px solid #334155; align-items: center; }
-        input[type="text"] { flex: 1; padding: 14px; border-radius: 10px; border: 1px solid #334155; background: #1e293b; color: white; font-size: 15px; outline: none; }
-        input[type="text"]:focus { border-color: var(--accent); }
+        .recents-title { font-size: 12px; color: #64748b; font-weight: bold; margin: 20px 0 10px 5px; }
+        .recent-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; }
+        .recent-item { padding: 10px; border-radius: 6px; font-size: 14px; color: #334155; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .recent-item:hover { background: #e2e8f0; }
+
+        /* Main Workspace */
+        .main-container { flex: 1; display: flex; flex-direction: column; width: 100%; height: 100%; position: relative; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid #f1f5f9; }
+        .btn-icon { background: none; border: none; font-size: 20px; cursor: pointer; padding: 5px; color: #334155; }
+
+        .chat-area { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
+
+        /* Message Containers */
+        .msg-container { display: flex; flex-direction: column; max-width: 85%; }
+        .user-container { align-self: flex-end; }
+        .bot-container { align-self: flex-start; }
+
+        .msg { padding: 12px 16px; border-radius: 18px; font-size: 15px; line-height: 1.5; word-break: break-word; }
+        .user { background: var(--chat-user); color: white; border-bottom-right-radius: 4px; }
+        .bot { background: var(--chat-bot); color: var(--text-dark); border: 1px solid #e2e8f0; border-bottom-left-radius: 4px; }
+
+        /* Gemini Action Toolbar (Screenshot 2 Matching) */
+        .action-toolbar { display: flex; gap: 12px; margin-top: 8px; padding-left: 5px; color: #64748b; font-size: 15px; }
+        .action-btn { background: none; border: none; cursor: pointer; color: #64748b; font-size: 15px; transition: color 0.2s; }
+        .action-btn:hover { color: #2563eb; }
+
+        /* Floating Gemini Input Bar */
+        .input-container { padding: 10px 15px 15px; background: var(--bg-main); display: flex; flex-direction: column; gap: 6px; }
+        .disclaimer { text-align: center; font-size: 12px; color: #94a3b8; }
+        .input-bar { display: flex; align-items: center; gap: 10px; background: #f1f5f9; padding: 6px 14px; border-radius: 30px; }
+        .input-bar input { flex: 1; border: none; background: transparent; padding: 10px; font-size: 16px; outline: none; }
         
-        .btn { padding: 12px 18px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; color: white; font-size: 14px; }
-        .btn-send { background: #16a34a; }
-        .btn-mic { background: #eab308; }
-        .btn-mic.active { background: #dc2626; animation: pulse 1.5s infinite; }
+        .wave-btn { width: 38px; height: 38px; border-radius: 50%; border: none; background: #dbeafe; color: #2563eb; font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .wave-btn.active { background: #ef4444; color: white; animation: pulse 1.5s infinite; }
 
-        video { width: 100%; height: 120px; object-fit: cover; display: none; background: black; }
+        video { width: 100%; height: 120px; object-fit: cover; display: none; border-radius: 8px; }
         canvas { display: none; }
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 90; }
+        .overlay.active { display: block; }
+
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h2>🐼 Pandappa AI</h2>
-        <div class="controls">
-            <button class="btn-top" onclick="clearHistory()">🧹 Clear Chat</button>
-            <button class="btn-top" id="speechToggle" onclick="toggleSpeech()">🔊 Voice: ON</button>
-            <button class="btn-top" onclick="toggleCamera()">📷 Camera</button>
+    <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+    <!-- ChatGPT Style Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span>Pandappa AI</span>
+            <button class="btn-icon" onclick="toggleSidebar()">✕</button>
         </div>
+        <div class="menu-item" onclick="newChat()"><span>➕</span> New Chat</div>
+        <div class="menu-item" onclick="toggleCamera()"><span>📷</span> Camera Vision</div>
+        <div class="recents-title">RECENTS</div>
+        <div class="recent-list" id="recentList"></div>
     </div>
 
-    <video id="webcam" autoplay playsinline muted></video>
+    <!-- Main View -->
+    <div class="main-container">
+        <div class="top-bar">
+            <button class="btn-icon" onclick="toggleSidebar()">☰</button>
+            <span style="font-weight:bold; font-size:16px;">Pandappa AI</span>
+            <button class="btn-icon" onclick="toggleSpeech()" id="speechIcon">🔊</button>
+        </div>
 
-    <div class="chat-box" id="chatBox"></div>
+        <video id="webcam" autoplay playsinline muted></video>
 
-    <div class="input-bar">
-        <button class="btn btn-mic" id="micBtn" onclick="toggleVoice()">🎙️ Voice</button>
-        <input type="text" id="userInput" placeholder="ಇಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ ಅಥವಾ ಮಾತನಾಡಿ..." onkeypress="if(event.key === 'Enter') sendQuery()">
-        <button class="btn btn-send" onclick="sendQuery()">Send</button>
+        <div class="chat-area" id="chatArea">
+            <div class="msg-container bot-container">
+                <div class="msg bot">ನಮಸ್ಕಾರ! ನಾನು Pandappa AI. ಕೆಳಗೆ Gemini ಮಾದರಿಯಲ್ಲಿ ಪ್ರಶ್ನೆ ಕೇಳಿ, ತಕ್ಷಣವೇ ಚಾಟ್ ಲೈವ್ ರಿಸ್ಪಾನ್ಸ್ ಪಡೆಯಿರಿ.</div>
+            </div>
+        </div>
+
+        <!-- Gemini Input Bar -->
+        <div class="input-container">
+            <div class="disclaimer">Pandappa AI can make mistakes. Verify important info.</div>
+            <div class="input-bar">
+                <button class="btn-icon" onclick="toggleCamera()">＋</button>
+                <input type="text" id="userInput" placeholder="Ask Pandappa AI..." onkeypress="if(event.key === 'Enter') sendQuery()">
+                <button class="btn-icon" id="micBtn" onclick="toggleVoice()">🎙️</button>
+                <button class="wave-btn" id="sendBtn" onclick="sendQuery()">📊</button>
+            </div>
+        </div>
     </div>
 
     <canvas id="snapshotCanvas"></canvas>
@@ -77,19 +124,19 @@
         let isProcessing = false;
         let recognition = null;
         let videoStream = null;
-        let lastUserQuery = "";
+        let lastQuery = "";
 
-        // Load History on Page Start
-        window.onload = () => {
-            loadHistory();
-        };
+        window.onload = () => { loadRecents(); };
 
-        // Speech Recognition Setup
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('overlay').classList.toggle('active');
+        }
+
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             recognition = new SpeechRecognition();
             recognition.continuous = true;
-            recognition.interimResults = false;
             recognition.lang = 'kn-IN';
 
             recognition.onresult = (e) => {
@@ -104,7 +151,7 @@
         }
 
         function toggleVoice() {
-            const btn = document.getElementById('micBtn');
+            const btn = document.getElementById('sendBtn');
             if (!isListening) {
                 try { recognition.start(); isListening = true; btn.classList.add('active'); } catch(e){}
             } else {
@@ -114,7 +161,7 @@
 
         function toggleSpeech() {
             speechEnabled = !speechEnabled;
-            document.getElementById('speechToggle').innerText = speechEnabled ? "🔊 Voice: ON" : "🔇 Voice: OFF";
+            document.getElementById('speechIcon').innerText = speechEnabled ? "🔊" : "🔇";
             if (!speechEnabled) window.speechSynthesis.cancel();
         }
 
@@ -145,71 +192,97 @@
             const txt = overrideText || input.value.trim();
             if (!txt || isProcessing) return;
 
-            lastUserQuery = txt;
+            lastQuery = txt;
             if (!overrideText) input.value = '';
-            
-            appendMsg(txt, 'user');
-            saveHistory();
+
+            appendUserMsg(txt);
+            saveRecent(txt);
             isProcessing = true;
 
-            const botElem = appendMsg("🤔 Pandappa ಆಲೋಚಿಸುತ್ತಿದೆ...", 'bot');
+            const botContainer = createBotMsgContainer();
+            const botMsgElem = botContainer.querySelector('.msg');
+            botMsgElem.innerText = ""; // Clear text for stream
+
             const img = captureFrame();
 
             try {
-                const res = await fetch('/chat', {
+                const response = await fetch('/stream-chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ prompt: txt, image: img })
                 });
-                const data = await res.json();
-                const reply = data.response || "ಉತ್ತರ ಸಿಗಲಿಲ್ಲ.";
 
-                botElem.innerText = reply;
-                addActionBar(botElem, reply);
-                saveHistory();
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let fullText = "";
 
-                if (speechEnabled) speak(reply);
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n');
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const parsed = JSON.parse(line.replace('data: ', ''));
+                                if (parsed.chunk) {
+                                    fullText += parsed.chunk;
+                                    botMsgElem.innerText = fullText;
+                                    document.getElementById('chatArea').scrollTop = document.getElementById('chatArea').scrollHeight;
+                                }
+                            } catch(e){}
+                        }
+                    }
+                }
+
+                addGeminiToolbar(botContainer, fullText);
+                if (speechEnabled) speak(fullText);
 
             } catch(e) {
-                botElem.innerText = "❌ ಸರ್ವರ್ ಸಂಪರ್ಕದಲ್ಲಿ ತೊಂದರೆಯಾಗಿದೆ.";
+                botMsgElem.innerText = "❌ ರಿಸ್ಪಾನ್ಸ್ ಪಡೆಯಲು ಸಾಧ್ಯವಾಗುತ್ತಿಲ್ಲ. ಸರ್ವರ್ ಪರೀಕ್ಷಿಸಿ.";
             } finally {
                 isProcessing = false;
             }
         }
 
-        function appendMsg(txt, cls) {
-            const b = document.getElementById('chatBox');
-            const d = document.createElement('div');
-            d.className = `msg ${cls}`;
-            d.innerText = txt;
-            b.appendChild(d);
-            b.scrollTop = b.scrollHeight;
-            return d;
+        function appendUserMsg(txt) {
+            const box = document.getElementById('chatArea');
+            const div = document.createElement('div');
+            div.className = 'msg-container user-container';
+            div.innerHTML = `<div class="msg user">${txt}</div>`;
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
         }
 
-        function addActionBar(elem, text) {
-            const bar = document.createElement('div');
-            bar.className = 'action-bar';
-            
-            const copyBtn = document.createElement('button');
-            copyBtn.className = 'action-btn';
-            copyBtn.innerText = '📋 Copy';
-            copyBtn.onclick = () => {
-                navigator.clipboard.writeText(text);
-                copyBtn.innerText = '✅ Copied!';
-                setTimeout(() => copyBtn.innerText = '📋 Copy', 2000);
-            };
+        function createBotMsgContainer() {
+            const box = document.getElementById('chatArea');
+            const div = document.createElement('div');
+            div.className = 'msg-container bot-container';
+            div.innerHTML = `<div class="msg bot">⚡ ...</div>`;
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+            return div;
+        }
 
-            const regenBtn = document.createElement('button');
-            regenBtn.className = 'action-btn';
-            regenBtn.innerText = '🔄 Regenerate';
-            regenBtn.onclick = () => {
-                if (lastUserQuery) sendQuery(lastUserQuery);
-            };
+        function addGeminiToolbar(container, text) {
+            const toolbar = document.createElement('div');
+            toolbar.className = 'action-toolbar';
+            toolbar.innerHTML = `
+                <button class="action-btn" title="Like">👍</button>
+                <button class="action-btn" title="Dislike">👎</button>
+                <button class="action-btn" title="Regenerate" onclick="sendQuery('${lastQuery}')">🔄</button>
+                <button class="action-btn" title="Copy" onclick="copyText(this, \`${text}\`)">📋</button>
+                <button class="action-btn" title="Read aloud" onclick="speak(\`${text}\`)">🔊</button>
+            `;
+            container.appendChild(toolbar);
+        }
 
-            bar.appendChild(copyBtn);
-            bar.appendChild(regenBtn);
-            elem.appendChild(bar);
+        function copyText(btn, text) {
+            navigator.clipboard.writeText(text);
+            btn.innerText = '✅';
+            setTimeout(() => btn.innerText = '📋', 2000);
         }
 
         function speak(text) {
@@ -221,27 +294,34 @@
             }
         }
 
-        function saveHistory() {
-            const chatBox = document.getElementById('chatBox');
-            localStorage.setItem('pandappa_history', chatBox.innerHTML);
-        }
-
-        function loadHistory() {
-            const chatBox = document.getElementById('chatBox');
-            const saved = localStorage.getItem('pandappa_history');
-            if (saved) {
-                chatBox.innerHTML = saved;
-                chatBox.scrollTop = chatBox.scrollHeight;
-            } else {
-                appendMsg("ನಮಸ್ಕಾರ! ನಾನು Pandappa AI. ಕೆಳಗೆ ಟೈಪ್ ಮಾಡಿ ಅಥವಾ Voice ಮೂಲಕ ಕನ್ನಡ ಮತ್ತು ಇಂಗ್ಲಿಷ್‌ನಲ್ಲಿ ಪ್ರಶ್ನೆ ಕೇಳಿ.", 'bot');
+        function saveRecent(prompt) {
+            let recents = JSON.parse(localStorage.getItem('pandappa_recents') || '[]');
+            if (!recents.includes(prompt)) {
+                recents.unshift(prompt);
+                if (recents.length > 8) recents.pop();
+                localStorage.setItem('pandappa_recents', JSON.stringify(recents));
+                loadRecents();
             }
         }
 
-        function clearHistory() {
-            localStorage.removeItem('pandappa_history');
-            document.getElementById('chatBox').innerHTML = '';
-            appendMsg("ಚಾಟ್ ಇತಿಹಾಸವನ್ನು ಡಿಲೀಟ್ ಮಾಡಲಾಗಿದೆ. ಹೊಸ ಪ್ರಶ್ನೆ ಕೇಳಿ!", 'bot');
+        function loadRecents() {
+            const list = document.getElementById('recentList');
+            let recents = JSON.parse(localStorage.getItem('pandappa_recents') || '[]');
+            list.innerHTML = '';
+            recents.forEach(item => {
+                const d = document.createElement('div');
+                d.className = 'recent-item';
+                d.innerText = "💬 " + item;
+                d.onclick = () => { toggleSidebar(); sendQuery(item); };
+                list.appendChild(d);
+            });
+        }
+
+        function newChat() {
+            document.getElementById('chatArea').innerHTML = '';
+            toggleSidebar();
         }
     </script>
 </body>
 </html>
+
