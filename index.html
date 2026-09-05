@@ -1,111 +1,312 @@
+cat << 'EOF' > index.html
 <!DOCTYPE html>
 <html lang="kn">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pandappa AI Master Hub</title>
+    <title>Pandappa AI - Vision & Voice Dashboard</title>
     <style>
-        body { font-family: sans-serif; background-color: #0f172a; color: #fff; text-align: center; padding: 20px; }
-        .card { background: #1e293b; border-radius: 10px; padding: 15px; margin-bottom: 15px; }
-        .btn { padding: 10px 15px; font-size: 14px; margin: 5px; border: none; border-radius: 5px; background: #2563eb; color: white; cursor: pointer; }
-        video { width: 100%; max-width: 350px; border-radius: 8px; display: none; margin-top: 10px; }
-        #responseBox { background: #0f172a; padding: 15px; border-radius: 8px; text-align: left; min-height: 60px; border: 1px solid #334155; }
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent-color: #38bdf8;
+            --text-color: #f8fafc;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: var(--accent-color);
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: #94a3b8;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 220px;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: #2563eb;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        button.active {
+            background: #ef4444;
+        }
+
+        .chat-box {
+            height: 150px;
+            overflow-y: auto;
+            background: #0f172a;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #e2e8f0;
+            white-space: pre-wrap;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: white;
+        }
+
+        canvas {
+            display: none;
+        }
     </style>
 </head>
 <body>
 
-    <h2>🐼 ಪಾಂಡಪ್ಪ AI (Pandappa AI Master)</h2>
-    
-    <div class="card">
-        <div id="status">🎙️ 'ಹೇ ಪಾಂಡಪ್ಪ' ಸಕ್ರಿಯಗೊಳಿಸಲು ಸ್ಟಾರ್ಟ್ ಬಟನ್ ಒತ್ತಿ</div>
-        <button class="btn" onclick="initVoice()">Start Wake-Word ("ಹೇ ಪಾಂಡಪ್ಪ")</button>
+    <h1>🐼 Pandappa AI Dashboard</h1>
+
+    <div class="container">
+        <!-- Status & Vision -->
+        <div class="card">
+            <div class="status-bar">
+                <span>Status: <strong id="status-text" style="color:#4ade80;">Ready</strong></span>
+                <span>Wake Word: <strong>"ಪಾಂಡಪ್ಪ"</strong></span>
+            </div>
+
+            <div class="video-container">
+                <video id="webcam" autoplay playsinline muted></video>
+            </div>
+
+            <div class="controls">
+                <button id="cameraBtn" onclick="toggleCamera()">📷 Camera On/Off</button>
+                <button id="voiceBtn" onclick="toggleVoice()">🎙️ Start Listening</button>
+            </div>
+        </div>
+
+        <!-- Chat / Response Window -->
+        <div class="card">
+            <h3>💬 Output & Response</h3>
+            <div id="chat-output" class="chat-box">Pandappa AI ಗೆ ಸುಸ್ವಾಗತ! "Start Listening" ಕ್ಲಿಕ್ ಮಾಡಿ ಅಥವಾ ಪ್ರಶ್ನೆ ಟೈಪ್ ಮಾಡಿ...</div>
+
+            <div class="input-group">
+                <input type="text" id="userInput" placeholder="ನಿಮ್ಮ ಪ್ರಶ್ನೆ ಟೈಪ್ ಮಾಡಿ..." onkeypress="handleKeyPress(event)">
+                <button onclick="sendManualQuery()" style="flex: 0.3;">Send</button>
+            </div>
+        </div>
     </div>
 
-    <div class="card">
-        <h3>📺 ಲೈವ್ ಸ್ಕ್ರೀನ್ ಶೇರ್ / ಕ್ಯಾಮೆರಾ</h3>
-        <button class="btn" onclick="startCamera()">📸 ಕ್ಯಾಮೆರಾ ಆನ್</button>
-        <button class="btn" onclick="startScreenShare()">📲 ಸ್ಕ್ರೀನ್ ಶೇರ್</button>
-        <video id="videoFeed" autoplay playsinline></video>
-    </div>
-
-    <div class="card">
-        <h3>💬 AI ಉತ್ತರ:</h3>
-        <div id="responseBox">ಇಲ್ಲಿ ಉತ್ತರ ಕಾಣಿಸುತ್ತದೆ...</div>
-    </div>
+    <canvas id="snapshotCanvas"></canvas>
 
     <script>
-        let video = document.getElementById('videoFeed');
-        let status = document.getElementById('status');
-        let responseBox = document.getElementById('responseBox');
+        const API_URL = '/chat';
+        let isListening = false;
+        let isCameraOn = false;
+        let recognition;
+        let videoStream = null;
 
-        function initVoice() {
-            window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!window.SpeechRecognition) {
-                alert("Voice Recognition ಬೆಂಬಲವಿಲ್ಲ!");
-                return;
-            }
-            let recognition = new webkitSpeechRecognition();
+        // Web Speech Recognition Initialization
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
             recognition.continuous = true;
+            recognition.interimResults = false;
             recognition.lang = 'kn-IN';
 
-            recognition.onresult = function(event) {
-                let lastIndex = event.results.length - 1;
-                let text = event.results[lastIndex][0].transcript.toLowerCase().trim();
+            recognition.onresult = async function(event) {
+                const transcript = event.results[event.results.length - 1][0].transcript.trim();
+                updateStatus("ಕೇಳಿಸಿಕೊಂಡಿದ್ದು: " + transcript);
 
-                if (text.includes("ಪಾಂಡಪ್ಪ") || text.includes("pandappa")) {
-                    status.innerText = "⚡ 'ಹೇ ಪಾಂಡಪ್ಪ' ಗ್ರಹಿಸಲಾಗಿದೆ! ಪ್ರಶ್ನೆ ಕೇಳಿ...";
-                    speakText("ಹೇಳಿ ಪಾಂಡಪ್ಪ ಕೇಳುತ್ತಿದ್ದಾನೆ!");
-                } else {
-                    status.innerText = "🤔 ಆಲೋಚಿಸುತ್ತಿದೆ: " + text;
-                    processQuery(text);
+                // Check for wake words
+                const lowerText = transcript.toLowerCase();
+                if (lowerText.includes("ಪಾಂಡಪ್ಪ") || lowerText.includes("pandappa") || lowerText.includes("hey")) {
+                    processAIRequest(transcript);
                 }
             };
 
-            recognition.start();
-            status.innerText = "🎧 'ಹೇ ಪಾಂಡಪ್ಪ' ಶಬ್ದಕ್ಕಾಗಿ ಕಾಯಲಾಗುತ್ತಿದೆ...";
+            recognition.onerror = function(event) {
+                updateStatus("Voice Error: " + event.error, true);
+            };
+
+            recognition.onend = function() {
+                if (isListening) recognition.start();
+            };
+        } else {
+            alert("ನಿಮ್ಮ ಬ್ರೌಸರ್‌ನಲ್ಲಿ Speech Recognition ಕೆಲಸ ಮಾಡುತ್ತಿಲ್ಲ. Chrome ಬಳಸಿ.");
         }
 
-        async function startCamera() {
-            let stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            video.srcObject = stream;
-            video.style.display = "block";
+        function updateStatus(msg, isError = false) {
+            const statusElem = document.getElementById('status-text');
+            statusElem.innerText = msg;
+            statusElem.style.color = isError ? '#f87171' : '#4ade80';
         }
 
-        async function startScreenShare() {
-            let stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-            video.srcObject = stream;
-            video.style.display = "block";
+        function toggleVoice() {
+            const btn = document.getElementById('voiceBtn');
+            if (!isListening) {
+                recognition.start();
+                isListening = true;
+                btn.classList.add('active');
+                btn.innerText = "🛑 Stop Listening";
+                updateStatus("ಆಲಿಸಲಾಗುತ್ತಿದೆ...");
+            } else {
+                recognition.stop();
+                isListening = false;
+                btn.classList.remove('active');
+                btn.innerText = "🎙️ Start Listening";
+                updateStatus("Idle");
+            }
+        }
+
+        async function toggleCamera() {
+            const video = document.getElementById('webcam');
+            const btn = document.getElementById('cameraBtn');
+
+            if (!isCameraOn) {
+                try {
+                    videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                    video.srcObject = videoStream;
+                    isCameraOn = true;
+                    btn.classList.add('active');
+                    btn.innerText = "📷 Camera Off";
+                } catch (err) {
+                    alert("Camera Permission Denied/Error: " + err);
+                }
+            } else {
+                if (videoStream) {
+                    videoStream.getTracks().forEach(track => track.stop());
+                }
+                video.srcObject = null;
+                isCameraOn = false;
+                btn.classList.remove('active');
+                btn.innerText = "📷 Camera On/Off";
+            }
         }
 
         function captureFrame() {
-            if (video.style.display === "none" || !video.srcObject) return null;
-            let canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            let ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0);
-            return canvas.toDataURL('image/jpeg');
+            if (!isCameraOn) return null;
+            const video = document.getElementById('webcam');
+            const canvas = document.getElementById('snapshotCanvas');
+            canvas.width = video.videoWidth || 320;
+            canvas.height = video.videoHeight || 240;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            return canvas.toDataURL('image/jpeg', 0.7);
         }
 
-        function processQuery(userPrompt) {
-            let imageBase64 = captureFrame();
+        async function processAIRequest(promptText) {
+            const outputBox = document.getElementById('chat-output');
+            outputBox.innerText = `❓ You: ${promptText}\n\n🤔 Pandappa AI ಚಿಂತಿಸುತ್ತಿದೆ...`;
 
-            fetch('http://localhost:5000/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: userPrompt, image: imageBase64 })
-            })
-            .then(res => res.json())
-            .then(data => {
-                responseBox.innerText = data.response;
-                speakText(data.response);
-            });
+            const imageBase64 = captureFrame();
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prompt: promptText,
+                        image: imageBase64
+                    })
+                });
+
+                const data = await response.json();
+                const aiReply = data.response || "ಯಾವುದೇ ಉತ್ತರ ಲಭ್ಯವಿಲ್ಲ.";
+                
+                outputBox.innerText = `❓ You: ${promptText}\n\n🐼 Pandappa: ${aiReply}`;
+                speakText(aiReply);
+
+            } catch (err) {
+                outputBox.innerText = " Error: ಸರ್ವರ್ ಸಂಪರ್ಕ ಸಾಧಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.";
+            }
+        }
+
+        function sendManualQuery() {
+            const input = document.getElementById('userInput');
+            if (input.value.trim() !== '') {
+                processAIRequest(input.value.trim());
+                input.value = '';
+            }
+        }
+
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') sendManualQuery();
         }
 
         function speakText(text) {
-            let msg = new SpeechSynthesisUtterance(text);
-            msg.lang = 'kn-IN';
-            window.speechSynthesis.speak(msg);
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'kn-IN';
+            window.speechSynthesis.speak(utterance);
         }
     </script>
 </body>
