@@ -3,157 +3,196 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pandappa AI - Real Voice & Text</title>
+    <title>Pandappa AI - Ultra Fast Offline AI</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-        body { background: #0f172a; color: white; display: flex; flex-direction: column; height: 100vh; }
-        
-        .header { padding: 15px; background: #1e293b; text-align: center; border-bottom: 1px solid #334155; }
-        .wake-status { font-size: 13px; color: #38bdf8; margin-top: 5px; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
-        .chat-box { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
-        
-        .msg { max-width: 80%; padding: 12px 16px; border-radius: 12px; font-size: 15px; line-height: 1.4; }
-        .user { align-self: flex-end; background: #2563eb; color: white; }
-        .bot { align-self: flex-start; background: #334155; color: white; }
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
 
-        .controls { padding: 15px; background: #1e293b; display: flex; flex-direction: column; gap: 10px; }
-        .input-row { display: flex; gap: 10px; }
-        input { flex: 1; padding: 12px; border-radius: 25px; border: none; background: #0f172a; color: white; outline: none; }
-        
-        button { padding: 12px 18px; border-radius: 25px; border: none; font-weight: bold; cursor: pointer; }
-        .btn-send { background: #38bdf8; color: #0f172a; }
-        .btn-live { background: #22c55e; color: white; width: 100%; text-align: center; font-size: 16px; }
-        .btn-live.active { background: #ef4444; animation: pulse 1s infinite; }
+        /* Header UI */
+        header {
+            background-color: #1e293b;
+            padding: 15px 20px;
+            text-align: center;
+            border-bottom: 2px solid #38bdf8;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
 
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+        header h1 {
+            color: #38bdf8;
+            font-size: 1.5rem;
+            letter-spacing: 1px;
+        }
+
+        header p {
+            color: #94a3b8;
+            font-size: 0.85rem;
+            margin-top: 4px;
+        }
+
+        /* Chat Container */
+        #chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            line-height: 1.5;
+            font-size: 0.95rem;
+            word-wrap: break-word;
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background-color: #0284c7;
+            color: #ffffff;
+            border-bottom-right-radius: 2px;
+        }
+
+        .ai-message {
+            align-self: flex-start;
+            background-color: #1e293b;
+            color: #f1f5f9;
+            border-left: 4px solid #38bdf8;
+            border-bottom-left-radius: 2px;
+        }
+
+        /* Input Area UI */
+        #input-container {
+            display: flex;
+            padding: 15px;
+            background-color: #1e293b;
+            gap: 10px;
+            border-top: 1px solid #334155;
+        }
+
+        #user-input {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #475569;
+            background-color: #0f172a;
+            color: #ffffff;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        #user-input:focus {
+            border-color: #38bdf8;
+        }
+
+        #send-btn {
+            padding: 12px 20px;
+            background-color: #0284c7;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        #send-btn:hover {
+            background-color: #0369a1;
+        }
+
+        /* Scrollbar Styling */
+        #chat-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        #chat-container::-webkit-scrollbar-thumb {
+            background-color: #334155;
+            border-radius: 3px;
+        }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h2>Pandappa AI</h2>
-        <div class="wake-status" id="wakeStatus">🎙️ "Hey Pandappa" ಎಂದು ಹೇಳಿ ಆಕ್ಟಿವೇಟ್ ಮಾಡಿ</div>
-    </div>
+    <header>
+        <h1>P A N D A P P A   A I</h1>
+        <p>Real-Time Offline Intelligence • Gemini Style Web Engine</p>
+    </header>
 
-    <div class="chat-box" id="chatBox">
-        <div class="msg bot">ನಮಸ್ಕಾರ! ನಾನು Pandappa AI. "Hey Pandappa" ಎಂದು ಕರೆದು ಮಾತಾಡಿ ಅಥವಾ ಟೈಪ್ ಮಾಡಿ.</div>
-    </div>
-
-    <div class="controls">
-        <button class="btn-live" id="liveBtn" onclick="toggleLiveChat()">🔴 Live Continuous Voice Mode</button>
-        <div class="input-row">
-            <input type="text" id="userInput" placeholder="Type message..." onkeypress="if(event.key==='Enter') sendText()">
-            <button class="btn-send" onclick="sendText()">Send</button>
+    <div id="chat-container">
+        <div class="message ai-message">
+            ನಮಸ್ಕಾರ! ನಾನು <b>Pandappa AI</b>. ನಿಮಗೇನು ಸಹಾಯ ಬೇಕು?
         </div>
     </div>
 
+    <div id="input-container">
+        <input type="text" id="user-input" placeholder="ಇಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ..." onkeypress="handleKeyPress(event)" />
+        <button id="send-btn" onclick="sendMessage()">Send</button>
+    </div>
+
     <script>
-        let isLive = false;
-        let recognition = null;
-        let isSpeaking = false;
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('user-input');
 
-        // Speech Recognition Setup
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognition = new SpeechRecognition();
-            recognition.continuous = true;
-            recognition.interimResults = false;
-            recognition.lang = 'kn-IN'; // Kannada & English mix recognition
-
-            recognition.onresult = async (event) => {
-                if (isSpeaking) return;
-
-                const transcript = event.results[event.results.length - 1][0].transcript.trim();
-                console.log("Heard:", transcript);
-
-                // Wake word trigger: "Hey Pandappa" or "Pandappa"
-                if (transcript.toLowerCase().includes("pandappa") || transcript.toLowerCase().includes("ಪಾಂಡಪ್ಪ")) {
-                    document.getElementById('wakeStatus').innerText = "⚡ Pandappa Listening...";
-                    const query = transcript.replace(/hey/i, '').replace(/pandappa/i, '').replace(/ಪಾಂಡಪ್ಪ/i, '').trim();
-                    if (query) {
-                        processQuery(query);
-                    } else {
-                        speak("ಹೇಳಿ, ನಾನು ಕೇಳುತ್ತಿದ್ದೇನೆ.");
-                    }
-                } else if (isLive) {
-                    processQuery(transcript);
-                }
-            };
-
-            recognition.onend = () => {
-                if (isLive) recognition.start();
-            };
+        function appendMessage(text, className) {
+            const msgDiv = document.createElement('div');
+            msgDiv.classList.add('message', className);
+            msgDiv.innerText = text;
+            chatContainer.appendChild(msgDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            return msgDiv;
         }
 
-        function toggleLiveChat() {
-            const btn = document.getElementById('liveBtn');
-            if (!isLive) {
-                isLive = true;
-                btn.classList.add('active');
-                btn.innerText = "🛑 Stop Live Voice Mode";
-                recognition.start();
-                speak("ಲೈವ್ ವಾಯ್ಸ್ ಮೋಡ್ ಆನ್ ಆಗಿದೆ. ಮಾತಾಡಿ.");
-            } else {
-                isLive = false;
-                btn.classList.remove('active');
-                btn.innerText = "🔴 Live Continuous Voice Mode";
-                recognition.stop();
-            }
-        }
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            if (!text) return;
 
-        function sendText() {
-            const input = document.getElementById('userInput');
-            const txt = input.value.trim();
-            if (txt) {
-                input.value = '';
-                processQuery(txt);
-            }
-        }
+            appendMessage(text, 'user-message');
+            userInput.value = '';
 
-        async function processQuery(txt) {
-            appendMsg(txt, 'user');
-            const botMsg = appendMsg("ಆಲೋಚಿಸುತ್ತಿದೆ...", 'bot');
+            const aiMsgDiv = appendMessage('Pandappa AI ಯೋಚಿಸುತ್ತಿದೆ...', 'ai-message');
 
             try {
-                const res = await fetch('/chat', {
+                // Ollama Local API Stream Connection
+                const response = await fetch('http://localhost:11434/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt: txt })
+                    body: JSON.stringify({
+                        model: 'Pandappa_AI',
+                        prompt: text,
+                        stream: false
+                    })
                 });
-                const data = await res.json();
-                const reply = data.response || "ಉತ್ತರ ಸಿಗಲಿಲ್ಲ.";
 
-                botMsg.innerText = reply;
-                speak(reply);
-            } catch(e) {
-                botMsg.innerText = "❌ ಲೈವ್ ಸಂಪರ್ಕದಲ್ಲಿ ದೋಷ ಉಂಟಾಗಿದೆ.";
+                if (response.ok) {
+                    const data = await response.json();
+                    aiMsgDiv.innerText = data.response;
+                } else {
+                    aiMsgDiv.innerText = 'Error: AI ಸಿಸ್ಟಮ್ ಸಂಪರ್ಕಿಸಲು ಸಾಧ್ಯವಾಗುತ್ತಿಲ್ಲ.';
+                }
+            } catch (error) {
+                aiMsgDiv.innerText = 'Error: Ollama Server ಆನ್‌ಲೈನ್‌ನಲ್ಲಿದೆಯೇ ಎಂದು ಪರಿಶೀಲಿಸಿ.';
             }
         }
 
-        function appendMsg(txt, cls) {
-            const box = document.getElementById('chatBox');
-            const d = document.createElement('div');
-            d.className = `msg ${cls}`;
-            d.innerText = txt;
-            box.appendChild(d);
-            box.scrollTop = box.scrollHeight;
-            return d;
-        }
-
-        function speak(text) {
-            if ('speechSynthesis' in window && text) {
-                isSpeaking = true;
-                window.speechSynthesis.cancel();
-                const u = new SpeechSynthesisUtterance(text);
-                u.lang = 'kn-IN';
-                u.onend = () => {
-                    isSpeaking = false;
-                    document.getElementById('wakeStatus').innerText = '🎙️ "Hey Pandappa" ಎಂದು ಹೇಳಿ ಆಕ್ಟಿವೇಟ್ ಮಾಡಿ';
-                };
-                window.speechSynthesis.speak(u);
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
             }
         }
     </script>
+
 </body>
 </html>
