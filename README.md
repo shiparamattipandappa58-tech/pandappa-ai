@@ -1,2 +1,0 @@
-# pandappa-ai
-My ai
